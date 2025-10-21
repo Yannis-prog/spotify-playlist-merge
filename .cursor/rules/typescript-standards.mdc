@@ -1,0 +1,124 @@
+---
+globs: *.ts,*.tsx
+description: TypeScript coding standards and best practices
+---
+
+# TypeScript Standards
+
+## Type Safety
+- Always use explicit types for function parameters and return values
+- Prefer interfaces over types for object shapes
+- Use union types for controlled variations
+- Implement strict null checks and handle undefined cases
+
+## Code Organization
+```typescript
+// File structure order:
+// 1. Imports
+// 2. Types/Interfaces
+// 3. Constants
+// 4. Utility functions
+// 5. Main component/class
+// 6. Exports
+```
+
+## Naming Conventions
+- **Variables**: camelCase (`userPlaylists`, `isLoading`)
+- **Functions**: camelCase with descriptive verbs (`fetchPlaylists`, `validateToken`)
+- **Interfaces**: PascalCase with descriptive names (`SpotifyPlaylist`, `UserProfile`)
+- **Enums**: PascalCase (`PlaylistStatus`, `AuthState`)
+- **Constants**: UPPER_SNAKE_CASE (`SPOTIFY_API_BASE_URL`)
+
+## Error Handling
+```typescript
+// Use custom error types
+class SpotifyApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public endpoint: string
+  ) {
+    super(message);
+    this.name = 'SpotifyApiError';
+  }
+}
+
+// Implement guard clauses
+function validatePlaylist(playlist: unknown): playlist is SpotifyPlaylist {
+  return (
+    typeof playlist === 'object' &&
+    playlist !== null &&
+    'id' in playlist &&
+    'name' in playlist
+  );
+}
+```
+
+## Async/Await Patterns
+```typescript
+// Prefer async/await over Promises
+async function fetchUserPlaylists(token: string): Promise<SpotifyPlaylist[]> {
+  try {
+    const response = await spotifyApi.getUserPlaylists(token);
+    return response.items;
+  } catch (error) {
+    throw new SpotifyApiError('Failed to fetch playlists', 500, '/me/playlists');
+  }
+}
+```
+
+## Generic Types
+```typescript
+// Use generics for reusable components
+interface ApiResponse<T> {
+  data: T;
+  status: number;
+  message: string;
+}
+
+// Generic hooks
+function useSpotifyApi<T>(endpoint: string): {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+} {
+  // Implementation
+}
+```
+
+## JSDoc Comments
+```typescript
+/**
+ * Merges multiple Spotify playlists into a single playlist
+ * @param playlists - Array of playlists to merge
+ * @param targetPlaylistId - ID of the target playlist
+ * @param accessToken - Spotify access token
+ * @returns Promise resolving to the merged playlist
+ * @throws {SpotifyApiError} When API request fails
+ */
+async function mergePlaylists(
+  playlists: SpotifyPlaylist[],
+  targetPlaylistId: string,
+  accessToken: string
+): Promise<SpotifyPlaylist> {
+  // Implementation
+}
+```
+
+## Utility Types
+```typescript
+// Use built-in utility types
+type PartialPlaylist = Partial<SpotifyPlaylist>;
+type PlaylistKeys = keyof SpotifyPlaylist;
+type RequiredPlaylist = Required<SpotifyPlaylist>;
+
+// Create custom utility types
+type NonNullable<T> = T extends null | undefined ? never : T;
+type ApiEndpoint = `/api/${string}`;
+```
+
+## Strict Configuration
+- Enable `strict: true` in tsconfig.json
+- Use `noImplicitAny: true`
+- Enable `noImplicitReturns: true`
+- Use `noUnusedLocals: true` and `noUnusedParameters: true`

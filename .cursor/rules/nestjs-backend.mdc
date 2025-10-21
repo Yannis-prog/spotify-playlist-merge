@@ -1,0 +1,202 @@
+---
+globs: backend/**/*.ts
+description: NestJS backend development standards and patterns
+---
+
+# NestJS Backend Standards
+
+## Architecture Patterns
+- Use **Modular Architecture** with clear separation of concerns
+- Implement **Dependency Injection** for all services
+- Follow **SOLID principles** throughout the codebase
+- Use **Guards** for authentication and authorization
+- Implement **Interceptors** for logging and transformation
+
+## Project Structure
+```
+backend/
+├── src/
+│   ├── auth/           # Authentication module
+│   ├── spotify/        # Spotify API integration
+│   ├── playlists/      # Playlist management
+│   ├── cron/           # Scheduled tasks
+│   ├── common/         # Shared utilities
+│   ├── config/         # Configuration
+│   └── main.ts         # Application entry point
+├── test/               # Test files
+└── package.json
+```
+
+## Service Patterns
+```typescript
+@Injectable()
+export class SpotifyService {
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async getUserPlaylists(accessToken: string): Promise<SpotifyPlaylist[]> {
+    // Implementation with proper error handling
+  }
+}
+```
+
+## Controller Patterns
+```typescript
+@Controller('api/playlists')
+@UseGuards(AuthGuard)
+export class PlaylistsController {
+  constructor(private readonly playlistsService: PlaylistsService) {}
+
+  @Get()
+  async getPlaylists(@Req() req: Request): Promise<SpotifyPlaylist[]> {
+    return this.playlistsService.getUserPlaylists(req.user.accessToken);
+  }
+}
+```
+
+## Error Handling
+```typescript
+@Catch(SpotifyApiError)
+export class SpotifyExceptionFilter implements ExceptionFilter {
+  catch(exception: SpotifyApiError, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    
+    response.status(exception.statusCode).json({
+      statusCode: exception.statusCode,
+      message: exception.message,
+      endpoint: exception.endpoint,
+    });
+  }
+}
+```
+
+## Configuration Management
+```typescript
+@Injectable()
+export class SpotifyConfigService {
+  constructor(private configService: ConfigService) {}
+
+  get clientId(): string {
+    return this.configService.get<string>('SPOTIFY_CLIENT_ID');
+  }
+
+  get clientSecret(): string {
+    return this.configService.get<string>('SPOTIFY_CLIENT_SECRET');
+  }
+
+  get redirectUri(): string {
+    return this.configService.get<string>('SPOTIFY_REDIRECT_URI');
+  }
+}
+```
+
+## Cron Jobs
+```typescript
+@Injectable()
+export class PlaylistMergeCron {
+  constructor(private readonly playlistsService: PlaylistsService) {}
+
+  @Cron('0 * * * *') // Every hour
+  async mergePlaylists() {
+    try {
+      await this.playlistsService.mergeAllPlaylists();
+    } catch (error) {
+      console.error('Failed to merge playlists:', error);
+    }
+  }
+}
+```
+
+## Validation
+```typescript
+export class CreatePlaylistDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  public?: boolean;
+}
+```
+
+## Database Integration
+- Use **TypeORM** or **Prisma** for database operations
+- Implement **Migrations** for schema changes
+- Use **Repositories** for data access patterns
+- Implement **Transactions** for complex operations
+
+## Security Best Practices
+- Use **Helmet** for security headers
+- Implement **CORS** properly
+- Use **Rate Limiting** for API endpoints
+- Store secrets in environment variables
+- Implement **JWT** for authentication
+
+## Testing
+```typescript
+describe('SpotifyService', () => {
+  let service: SpotifyService;
+  let httpService: HttpService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SpotifyService,
+        {
+          provide: HttpService,
+          useValue: {
+            get: jest.fn(),
+            post: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<SpotifyService>(SpotifyService);
+    httpService = module.get<HttpService>(HttpService);
+  });
+
+  it('should fetch user playlists', async () => {
+    // Test implementation
+  });
+});
+```
+
+## Logging
+```typescript
+@Injectable()
+export class AppLogger {
+  private readonly logger = new Logger(AppLogger.name);
+
+  log(message: string, context?: string) {
+    this.logger.log(message, context);
+  }
+
+  error(message: string, trace?: string, context?: string) {
+    this.logger.error(message, trace, context);
+  }
+}
+```
+
+## Health Checks
+```typescript
+@Injectable()
+export class SpotifyHealthIndicator extends HealthIndicator {
+  async check(key: string): Promise<HealthIndicatorResult> {
+    try {
+      // Check Spotify API connectivity
+      return this.getStatus(key, true);
+    } catch (error) {
+      return this.getStatus(key, false, { error: error.message });
+    }
+  }
+}
+```

@@ -1,0 +1,416 @@
+---
+globs: **/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx
+description: Testing standards and patterns for the Spotify Merge project
+---
+
+# Testing Standards
+
+## Testing Philosophy
+- **Test Behavior, Not Implementation**: Focus on what the code does, not how it does it
+- **Arrange-Act-Assert Pattern**: Structure tests clearly with setup, execution, and verification
+- **Test Edge Cases**: Include error conditions, empty states, and boundary conditions
+- **Mock External Dependencies**: Isolate units under test from external services
+- **Maintain Test Independence**: Each test should be able to run in isolation
+
+## Frontend Testing (React Testing Library)
+
+### Component Testing
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { PlaylistSelector } from './playlist-selector';
+
+describe('PlaylistSelector', () => {
+  const mockPlaylists: SpotifyPlaylist[] = [
+    {
+      id: '1',
+      name: 'Test Playlist 1',
+      description: 'Test description',
+      public: true,
+      collaborative: false,
+      owner: { id: 'user1', display_name: 'User 1' },
+      tracks: { href: '', total: 10 },
+      images: [],
+    },
+  ];
+
+  it('renders playlists correctly', () => {
+    const mockOnSelectionChange = jest.fn();
+    
+    render(
+      <PlaylistSelector
+        playlists={mockPlaylists}
+        onSelectionChange={mockOnSelectionChange}
+      />
+    );
+
+    expect(screen.getByText('Test Playlist 1')).toBeInTheDocument();
+  });
+
+  it('calls onSelectionChange when playlist is selected', () => {
+    const mockOnSelectionChange = jest.fn();
+    
+    render(
+      <PlaylistSelector
+        playlists={mockPlaylists}
+        onSelectionChange={mockOnSelectionChange}
+      />
+    );
+
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
+    expect(mockOnSelectionChange).toHaveBeenCalledWith(['1']);
+  });
+
+  it('shows loading state when isLoading is true', () => {
+    render(
+      <PlaylistSelector
+        playlists={[]}
+        onSelectionChange={jest.fn()}
+        isLoading={true}
+      />
+    );
+
+    expect(screen.getByTestId('playlist-skeleton')).toBeInTheDocument();
+  });
+});
+```
+
+### Custom Hook Testing
+```typescript
+import { renderHook, act } from '@testing-library/react';
+import { useSpotifyPlaylists } from './use-spotify-playlists';
+
+// Mock fetch
+global.fetch = jest.fn();
+
+describe('useSpotifyPlaylists', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('fetches playlists on mount', async () => {
+    const mockPlaylists = [{ id: '1', name: 'Test Playlist' }];
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      json: () => Promise.resolve(mockPlaylists),
+    });
+
+    const { result } = renderHook(() => useSpotifyPlaylists());
+
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.playlists).toEqual(mockPlaylists);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('handles fetch errors', async () => {
+    (fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
+    const { result } = renderHook(() => useSpotifyPlaylists());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.error).toBe('Network error');
+    expect(result.current.loading).toBe(false);
+  });
+});
+```
+
+### Integration Testing
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { PlaylistMergePage } from './playlist-merge-page';
+
+// Mock the API
+jest.mock('../api/spotify', () => ({
+  getPlaylists: jest.fn(),
+  mergePlaylists: jest.fn(),
+}));
+
+describe('PlaylistMergePage Integration', () => {
+  it('completes the full merge flow', async () => {
+    const mockPlaylists = [
+      { id: '1', name: 'Playlist 1' },
+      { id: '2', name: 'Playlist 2' },
+    ];
+
+    const { getPlaylists, mergePlaylists } = require('../api/spotify');
+    getPlaylists.mockResolvedValue(mockPlaylists);
+    mergePlaylists.mockResolvedValue({ success: true });
+
+    render(<PlaylistMergePage />);
+
+    // Wait for playlists to load
+    await waitFor(() => {
+      expect(screen.getByText('Playlist 1')).toBeInTheDocument();
+    });
+
+    // Select playlists
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+
+    // Click merge button
+    const mergeButton = screen.getByText('Merge Playlists');
+    fireEvent.click(mergeButton);
+
+    // Verify merge was called
+    await waitFor(() => {
+      expect(mergePlaylists).toHaveBeenCalledWith(['1', '2']);
+    });
+  });
+});
+```
+
+## Backend Testing (Jest + NestJS)
+
+### Service Testing
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { SpotifyService } from './spotify.service';
+import { HttpService } from '@nestjs/axios';
+import { of, throwError } from 'rxjs';
+
+describe('SpotifyService', () => {
+  let service: SpotifyService;
+  let httpService: HttpService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SpotifyService,
+        {
+          provide: HttpService,
+          useValue: {
+            get: jest.fn(),
+            post: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<SpotifyService>(SpotifyService);
+    httpService = module.get<HttpService>(HttpService);
+  });
+
+  it('should fetch user playlists', async () => {
+    const mockPlaylists = {
+      data: {
+        items: [
+          { id: '1', name: 'Test Playlist' },
+        ],
+      },
+    };
+
+    jest.spyOn(httpService, 'get').mockReturnValue(of(mockPlaylists));
+
+    const result = await service.getUserPlaylists('access-token');
+
+    expect(result).toEqual(mockPlaylists.data.items);
+    expect(httpService.get).toHaveBeenCalledWith(
+      'https://api.spotify.com/v1/me/playlists',
+      expect.any(Object)
+    );
+  });
+
+  it('should handle API errors', async () => {
+    jest.spyOn(httpService, 'get').mockReturnValue(
+      throwError(() => new Error('API Error'))
+    );
+
+    await expect(service.getUserPlaylists('access-token')).rejects.toThrow('API Error');
+  });
+});
+```
+
+### Controller Testing
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { PlaylistsController } from './playlists.controller';
+import { PlaylistsService } from './playlists.service';
+
+describe('PlaylistsController', () => {
+  let controller: PlaylistsController;
+  let service: PlaylistsService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [PlaylistsController],
+      providers: [
+        {
+          provide: PlaylistsService,
+          useValue: {
+            getUserPlaylists: jest.fn(),
+            mergePlaylists: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    controller = module.get<PlaylistsController>(PlaylistsController);
+    service = module.get<PlaylistsService>(PlaylistsService);
+  });
+
+  it('should return user playlists', async () => {
+    const mockPlaylists = [{ id: '1', name: 'Test Playlist' }];
+    jest.spyOn(service, 'getUserPlaylists').mockResolvedValue(mockPlaylists);
+
+    const result = await controller.getPlaylists({
+      user: { accessToken: 'token' },
+    } as any);
+
+    expect(result).toEqual(mockPlaylists);
+    expect(service.getUserPlaylists).toHaveBeenCalledWith('token');
+  });
+});
+```
+
+### E2E Testing
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../src/app.module';
+
+describe('Playlists (e2e)', () => {
+  let app: INestApplication;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  it('/playlists (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/playlists')
+      .expect(200)
+      .expect((res) => {
+        expect(Array.isArray(res.body)).toBe(true);
+      });
+  });
+
+  it('/playlists/merge (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/playlists/merge')
+      .send({ playlistIds: ['1', '2'] })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.success).toBe(true);
+      });
+  });
+});
+```
+
+## Test Utilities
+
+### Mock Factories
+```typescript
+export const createMockPlaylist = (overrides: Partial<SpotifyPlaylist> = {}): SpotifyPlaylist => ({
+  id: '1',
+  name: 'Test Playlist',
+  description: 'Test description',
+  public: true,
+  collaborative: false,
+  owner: { id: 'user1', display_name: 'User 1' },
+  tracks: { href: '', total: 10 },
+  images: [],
+  ...overrides,
+});
+
+export const createMockTrack = (overrides: Partial<SpotifyTrack> = {}): SpotifyTrack => ({
+  id: '1',
+  name: 'Test Track',
+  artists: [{ id: 'artist1', name: 'Test Artist' }],
+  album: {
+    id: 'album1',
+    name: 'Test Album',
+    images: [],
+  },
+  duration_ms: 180000,
+  external_urls: { spotify: 'https://spotify.com/track/1' },
+  ...overrides,
+});
+```
+
+### Test Helpers
+```typescript
+export const renderWithProviders = (
+  ui: React.ReactElement,
+  options: { initialEntries?: string[] } = {}
+) => {
+  const { initialEntries = ['/'] } = options;
+  
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <QueryClient client={new QueryClient()}>
+        {ui}
+      </QueryClient>
+    </MemoryRouter>
+  );
+};
+
+export const waitForLoadingToFinish = () =>
+  waitFor(() => {
+    expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
+  });
+```
+
+## Test Configuration
+
+### Jest Configuration
+```json
+{
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/src/setupTests.ts"],
+    "moduleNameMapping": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/**/*.stories.{ts,tsx}"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  }
+}
+```
+
+### Test Setup
+```typescript
+// setupTests.ts
+import '@testing-library/jest-dom';
+
+// Mock IntersectionObserver
+global.IntersectionObserver = class IntersectionObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+};
+
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+};
+```

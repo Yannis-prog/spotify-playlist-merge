@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+description: Spotify Merge project specific guidelines and architecture
+---
+
+# Spotify Merge Project Guidelines
+
+## Project Overview
+We are building a full-stack project called "Spotify Merge" using Next.js (frontend) and NestJS (backend), both in TypeScript.
+
+**Goal**: Connect to Spotify via OAuth2, select multiple playlists, and automatically merge them into a single "global playlist" that updates every hour, adding only new songs.
+
+## Tech Stack
+- **Frontend**: Next.js + TypeScript
+- **Backend**: NestJS + spotify-web-api-node + @nestjs/schedule (for cron)
+- **API**: Spotify API for authentication and playlist management
+- **UI**: Minimal design with functionality focus
+
+## Development Phases
+The project progresses through 7 phases:
+1. **Setup**: Project initialization and configuration
+2. **Authentication**: Spotify OAuth2 integration
+3. **Playlist Retrieval**: Fetching user playlists
+4. **Merging**: Combining playlists into global playlist
+5. **Automation**: Hourly updates with cron jobs
+6. **Cleanup**: Code optimization and refactoring
+7. **Deployment**: Production deployment
+
+## Code Organization
+- **Frontend**: Located in `/frontend` directory
+- **Backend**: Located in `/backend` directory
+- **Shared**: Common types and utilities in `/shared` directory
+- **Documentation**: Project docs in `/docs` directory
+
+## Key Principles
+- **Separation of Concerns**: Clear separation between frontend and backend logic
+- **Type Safety**: Comprehensive TypeScript usage across the stack
+- **Error Handling**: Robust error handling for Spotify API interactions
+- **Security**: Secure OAuth2 implementation and token management
+- **Performance**: Efficient playlist merging and API usage
+- **Maintainability**: Clean, well-documented, and modular code
+
+## File Naming Conventions
+- Components: PascalCase (e.g., `PlaylistSelector.tsx`)
+- Pages: kebab-case (e.g., `playlist-merge.tsx`)
+- Utilities: camelCase (e.g., `spotifyApi.ts`)
+- Types: PascalCase with descriptive names (e.g., `SpotifyPlaylist.ts`)
+
+## API Integration
+- Use spotify-web-api-node for backend Spotify integration
+- Implement proper token refresh mechanisms
+- Handle rate limiting and API errors gracefully
+- Cache playlist data when appropriate
+
+## State Management
+- Use Zustand for global state management
+- Implement optimistic updates for better UX
+- Cache Spotify data to reduce API calls
+- Handle loading and error states consistently
+
+## Security Considerations
+- Store sensitive data (tokens) securely
+- Implement proper CORS policies
+- Validate all user inputs
+- Use environment variables for configuration
