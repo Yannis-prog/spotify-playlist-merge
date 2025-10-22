@@ -1,26 +1,35 @@
-# Node / pnpm
-.pnpm-debug.log
-pnpm-lock.yaml
+# Dependencies
+node_modules/
 
-# Env / secrets
+# Env files
 .env
-.env.local
-.env.*.local
-
-# OS & IDE
-.DS_Store
-Thumbs.db
-desktop.ini
+.env.*
+ENV
+ENV.EXAMPLE
 
 # Logs
-logs/
-*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# VSCode
+# Build outputs
+backend/dist/
+frontend/.next/
+frontend/out/
+
+# IDE metadata
 .vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Os files
+desktop.ini
+
+# Coverage
+coverage/
 
 # Misc
+.next/
 *.local
-*.tmp
-.idea/
-EOF
