@@ -1,8 +1,7 @@
 ---
-globs: backend/**/*.ts
 description: NestJS backend development standards and patterns
+alwaysApply: false
 ---
-
 # NestJS Backend Standards
 
 ## Architecture Patterns

@@ -33,3 +33,6 @@ coverage/
 # Misc
 .next/
 *.local
+
+# Spotify dev account info (contains sensitive credentials)
+.cursor/rules/spotify-dev-account.mdc

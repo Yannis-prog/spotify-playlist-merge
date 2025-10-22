@@ -1,0 +1,14 @@
+# HTTPS Requirements
+
+## Production HTTPS Requirements
+- All production deployments MUST use HTTPS
+- Spotify OAuth requires HTTPS for redirect URIs in production
+- Use HTTP only for local development (localhost)
+- Update SPOTIFY_REDIRECT_URI to use https:// in production
+- Ensure SSL certificates are properly configured
+
+## Development vs Production
+- Local development: HTTP allowed (localhost)
+- Production deployment: HTTPS mandatory
+- SSL certificates must be valid and properly configured
+- CORS must be configured for production domain

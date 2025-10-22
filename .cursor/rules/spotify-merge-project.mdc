@@ -1,8 +1,6 @@
 ---
 alwaysApply: true
-description: Spotify Merge project specific guidelines and architecture
 ---
-
 # Spotify Merge Project Guidelines
 
 ## Project Overview
@@ -18,13 +16,13 @@ We are building a full-stack project called "Spotify Merge" using Next.js (front
 
 ## Development Phases
 The project progresses through 7 phases:
-1. **Setup**: Project initialization and configuration
-2. **Authentication**: Spotify OAuth2 integration
-3. **Playlist Retrieval**: Fetching user playlists
-4. **Merging**: Combining playlists into global playlist
-5. **Automation**: Hourly updates with cron jobs
-6. **Cleanup**: Code optimization and refactoring
-7. **Deployment**: Production deployment
+1. **Setup**: Environement Setup & Configuration
+2. **Authentication**: Spotify OAuth2 Authentication
+3. **Playlist Retrieval**: Playlist Retrieval
+4. **Merging**: Playlist Merge Logic
+5. **Automation**: Automation with Cron
+6. **Cleanup**: Polish & Best Practices
+7. **Deployment**: Deployment
 
 ## Code Organization
 - **Frontend**: Located in `/frontend` directory
