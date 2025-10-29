@@ -1,0 +1,10 @@
+{
+  "userId": "",
+  "merges": [
+    {
+      "sourcePlaylistIds": [],
+      "targetPlaylistName": "My Merged Playlist",
+      "targetPlaylistId": ""
+    }
+  ]
+}
