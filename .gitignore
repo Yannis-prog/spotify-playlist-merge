@@ -3,7 +3,9 @@ node_modules/
 
 # Env files
 .env
+.env.*
 ENV
+ENV.EXAMPLE
 
 # Logs
 npm-debug.log*
