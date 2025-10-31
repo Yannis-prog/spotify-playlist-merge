@@ -1,17 +1,31 @@
+# ============================================
+# PRODUCTION ENVIRONMENT VARIABLES
+# ============================================
+# Configure these in Render Dashboard
+# NO LOCAL DEVELOPMENT SUPPORTED
+
 # Spotify API Credentials
 # Get these from: https://developer.spotify.com/dashboard
-SPOTIFY_CLIENT_ID=your_client_id_here
-SPOTIFY_CLIENT_SECRET=your_client_secret_here
-SPOTIFY_REDIRECT_URI=http://localhost:3001/auth/callback
+SPOTIFY_CLIENT_ID=your_production_client_id
+SPOTIFY_CLIENT_SECRET=your_production_client_secret
+SPOTIFY_REDIRECT_URI=https://your-backend.onrender.com/auth/callback
 
-# Frontend URL
-FRONTEND_URL=http://localhost:3000
+# Frontend URL (your Render frontend URL)
+FRONTEND_URL=https://your-frontend.onrender.com
 
-# Session Secret (generate a random string)
-SESSION_SECRET=change-me-to-random-secret
+# Session Secret (Render auto-generates this, or use: openssl rand -base64 32)
+SESSION_SECRET=use_render_auto_generated_value
 
-# Server Port
-PORT=3001
+# Server Port (Render uses port 10000 by default)
+PORT=10000
 
-# Node Environment
-NODE_ENV=development
+# Node Environment (always production)
+NODE_ENV=production
+
+# ============================================
+# SPOTIFY SETUP REMINDER:
+# ============================================
+# 1. Go to https://developer.spotify.com/dashboard
+# 2. Create/edit your app
+# 3. Add Redirect URI: https://your-backend.onrender.com/auth/callback
+# 4. Note: localhost is NO LONGER supported by Spotify (April 2025+)

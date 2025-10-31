@@ -1,0 +1,14 @@
+# ============================================
+# PRODUCTION ENVIRONMENT VARIABLES
+# ============================================
+# Configure this in Render Dashboard
+# NO LOCAL DEVELOPMENT SUPPORTED
+
+# Backend URL (your Render backend URL)
+NEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com
+
+# ============================================
+# IMPORTANT:
+# ============================================
+# This variable MUST be set in Render Dashboard
+# for the frontend to work properly.
